@@ -146,10 +146,9 @@ int http_client(int argc, char *argv[])
     char *hostname = "github.com";
     struct hostent *hp;
     if ((hp = gethostbyname(hostname)) == NULL) {
+	    printf("iii\n");
         return 1;
     }
-    
-    printf("iii\n");
 	
     strcpy(ip, inet_ntoa(*(struct in_addr *)hp->h_addr_list[0]));
 
