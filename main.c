@@ -122,8 +122,6 @@ int Quit(int argc, char *argv[])
     /* add XXX clean ops */
 }
 
-#include<stdio.h>
-#include<stdlib.h>
 #include<string.h>    //strlen
 #include<sys/socket.h>
 #include<arpa/inet.h> //inet_addr
@@ -142,6 +140,8 @@ int http_client(int argc, char *argv[])
         printf("Could not create socket");
     }
 
+    printf("hhh\n");
+	
     char ip[20] = {0};
     char *hostname = "github.com";
     struct hostent *hp;
@@ -149,6 +149,8 @@ int http_client(int argc, char *argv[])
         return 1;
     }
     
+    printf("iii\n");
+	
     strcpy(ip, inet_ntoa(*(struct in_addr *)hp->h_addr_list[0]));
 
     server.sin_addr.s_addr = inet_addr(ip);
