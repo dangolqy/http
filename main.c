@@ -130,7 +130,7 @@ int Quit(int argc, char *argv[])
 #include<netdb.h>
 #include<errno.h>
 
-int http_client()
+int http_client(int argc, char *argv[])
 {
     int socket_desc;
     struct sockaddr_in server;
