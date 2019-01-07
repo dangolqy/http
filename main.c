@@ -122,7 +122,95 @@ int Quit(int argc, char *argv[])
     /* add XXX clean ops */
 }
 
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>    //strlen
+#include<sys/socket.h>
+#include<arpa/inet.h> //inet_addr
+#include<netdb.h>
+#include<errno.h>
 
+int http_client()
+{
+    int socket_desc;
+    struct sockaddr_in server;
+    char *message;
+
+    //Create socket
+    socket_desc = socket(AF_INET, SOCK_STREAM , 0);
+    if (socket_desc == -1) {
+        printf("Could not create socket");
+    }
+
+    char ip[20] = {0};
+    char *hostname = "github.com";
+    struct hostent *hp;
+    if ((hp = gethostbyname(hostname)) == NULL) {
+        return 1;
+    }
+    
+    strcpy(ip, inet_ntoa(*(struct in_addr *)hp->h_addr_list[0]));
+
+    server.sin_addr.s_addr = inet_addr(ip);
+    server.sin_family = AF_INET;
+    server.sin_port = htons(80);
+
+
+    //Connect to remote server
+    if (connect(socket_desc, (struct sockaddr *)&server, sizeof(server)) < 0) {
+        printf("connect error： %s", errno);
+        return 1;
+    }
+
+    puts("Connected\n");
+
+    //Send some data
+    //http 协议
+    message = "GET / HTTP/1.1\r\nHost: github.com\r\n\r\n";
+
+    //向服务器发送数据
+    if (send(socket_desc, message, strlen(message) , 0) < 0) {
+        puts("Send failed");
+        return 1;
+    }
+    puts("Data Send\n");
+
+    struct timeval timeout = {20, 0};
+    setsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(struct timeval));
+
+    //Receive a reply from the server
+    //loop
+    int size_recv, total_size = 0;
+    char chunk[512];
+    while(1) {
+        memset(chunk , 0 , 512); //clear the variable
+        //获取数据
+        if ((size_recv =  recv(socket_desc, chunk, 512, 0) ) == -1) {
+            if (errno == EWOULDBLOCK || errno == EAGAIN) {
+                printf("recv timeout ...\n");
+                break;
+            } else if (errno == EINTR) {
+                printf("interrupt by signal...\n");
+                continue;
+            } else if (errno == ENOENT) {
+                printf("recv RST segement...\n");
+                break;
+            } else {
+                printf("unknown error: %d\n", errno);
+                exit(1);
+            }
+        } else if (size_recv == 0) {
+            printf("peer closed ...\n");
+            break;
+        } else {
+            total_size += size_recv;
+            printf("%s" , chunk);
+        }
+    }
+
+    printf("Reply received, total_size = %d bytes\n", total_size);
+    return 0;
+}
 
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -227,5 +315,6 @@ int main()
     SetPrompt("MenuOS>>");
     MenuConfig("version","MenuOS V1.0(Based on Linux 3.18.6)",NULL);
     MenuConfig("quit","Quit from MenuOS",Quit);
+    MenuConfig("http","http request",http_client);
     ExecuteMenu();
 }
