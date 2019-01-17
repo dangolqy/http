@@ -150,8 +150,8 @@ int http_client(int argc, char *argv[])
         return 1;
     }*/
 
-    char* ip="13.250.177.223";
-    strcpy(ip, inet_ntoa(*(struct in_addr *)/*hp->h_addr_list[0]*/ip));
+    char* host_ip="13.250.177.223";
+    strcpy(ip, inet_ntoa(*(struct in_addr *)/*hp->h_addr_list[0]*/host_ip));
 
     server.sin_addr.s_addr = inet_addr(ip);
     server.sin_family = AF_INET;
