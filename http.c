@@ -25,9 +25,6 @@ int main(int argc, char *argv[])
         return 1;
     }
     
-    char* host_ip;
-    printf("%s\n",inet_ntop(hp->h_addrtype,hp->h_addr_list[0],host_ip,strlen(host_ip)));
-    
     strcpy(ip, inet_ntoa(*(struct in_addr *)hp->h_addr_list[0]));
 
     server.sin_addr.s_addr = inet_addr(ip);
