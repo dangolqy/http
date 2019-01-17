@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
     }
     
     char* host_ip;
-    printf("%s\n",inet_ntop(hp->addrtype,hp->h_addr_list[0],host_ip,strlen(host_ip)));
+    printf("%s\n",inet_ntop(hp->h_addrtype,hp->h_addr_list[0],host_ip,strlen(host_ip)));
     
     strcpy(ip, inet_ntoa(*(struct in_addr *)hp->h_addr_list[0]));
 
