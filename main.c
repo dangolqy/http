@@ -210,59 +210,6 @@ int http_client(int argc, char *argv[])
     return 0;
 }
 
-#include"syswrapper.h"
-#define MAX_CONNECT_QUEUE   1024
-int Replyhi()
-{
-	char szBuf[MAX_BUF_LEN] = "\0";
-	char szReplyMsg[MAX_BUF_LEN] = "hi\0";
-	InitializeService();
-	while (1)
-	{
-		ServiceStart();
-		RecvMsg(szBuf);
-		SendMsg(szReplyMsg);
-		ServiceStop();
-	}
-	ShutdownService();
-	return 0;
-}
-
-int StartReplyhi(int argc, char *argv[])
-{
-	int pid;
-	/* fork another process */
-	pid = fork();
-	if (pid < 0)
-	{
-		/* error occurred */
-		fprintf(stderr, "Fork Failed!");
-		exit(-1);
-	}
-	else if (pid == 0)
-	{
-		/*	 child process 	*/
-		Replyhi();
-		printf("Reply hi TCP Service Started!\n");
-	}
-	else
-	{
-		/* 	parent process	 */
-		printf("Please input hello...\n");
-	}
-}
-
-int Hello(int argc, char *argv[])
-{
-	char szBuf[MAX_BUF_LEN] = "\0";
-	char szMsg[MAX_BUF_LEN] = "hello\0";
-	OpenRemoteService();
-	SendMsg(szMsg);
-	RecvMsg(szBuf);
-	CloseRemoteService();
-	return 0;
-}
-
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -416,8 +363,6 @@ int main()
     SetPrompt("MenuOS>>");
     MenuConfig("version","MenuOS V1.0(Based on Linux 3.18.6)",NULL);
     MenuConfig("quit","Quit from MenuOS",Quit);
-    MenuConfig("replyhi", "Reply hi TCP Service", StartReplyhi);
-    MenuConfig("hello", "Hello TCP Client", Hello);
     MenuConfig("http","http request",http_client);
     ExecuteMenu();
 }
