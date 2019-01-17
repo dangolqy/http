@@ -144,13 +144,14 @@ int http_client(int argc, char *argv[])
 	
     char ip[20] = {0};
     char *hostname = "github.com";
-    struct hostent *hp;
+    /*struct hostent *hp;
     if ((hp = gethostbyname(hostname)) == NULL) {
 	    printf("iii\n");
         return 1;
-    }
-	
-    strcpy(ip, inet_ntoa(*(struct in_addr *)hp->h_addr_list[0]));
+    }*/
+
+    char* ip="13.250.177.223";
+    strcpy(ip, inet_ntoa(*(struct in_addr *)/*hp->h_addr_list[0]*/ip));
 
     server.sin_addr.s_addr = inet_addr(ip);
     server.sin_family = AF_INET;
