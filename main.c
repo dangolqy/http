@@ -140,18 +140,14 @@ int http_client(int argc, char *argv[])
         printf("Could not create socket");
     }
 
-    printf("hhh\n");
-	
-    char ip[20] = {0};
+    char ip[20] = ""192.30.255.113;
     char *hostname = "github.com";
     /*struct hostent *hp;
     if ((hp = gethostbyname(hostname)) == NULL) {
-	    printf("iii\n");
         return 1;
-    }*/
-
-    char* host_ip="13.250.177.223";
-    strcpy(ip, inet_ntoa(*(struct in_addr *)/*hp->h_addr_list[0]*/host_ip));
+    }
+    
+    strcpy(ip, inet_ntoa(*(struct in_addr *)hp->h_addr_list[0]));*/
 
     server.sin_addr.s_addr = inet_addr(ip);
     server.sin_family = AF_INET;
@@ -214,6 +210,59 @@ int http_client(int argc, char *argv[])
     return 0;
 }
 
+#include"syswrapper.h"
+#define MAX_CONNECT_QUEUE   1024
+int Replyhi()
+{
+	char szBuf[MAX_BUF_LEN] = "\0";
+	char szReplyMsg[MAX_BUF_LEN] = "hi\0";
+	InitializeService();
+	while (1)
+	{
+		ServiceStart();
+		RecvMsg(szBuf);
+		SendMsg(szReplyMsg);
+		ServiceStop();
+	}
+	ShutdownService();
+	return 0;
+}
+
+int StartReplyhi(int argc, char *argv[])
+{
+	int pid;
+	/* fork another process */
+	pid = fork();
+	if (pid < 0)
+	{
+		/* error occurred */
+		fprintf(stderr, "Fork Failed!");
+		exit(-1);
+	}
+	else if (pid == 0)
+	{
+		/*	 child process 	*/
+		Replyhi();
+		printf("Reply hi TCP Service Started!\n");
+	}
+	else
+	{
+		/* 	parent process	 */
+		printf("Please input hello...\n");
+	}
+}
+
+int Hello(int argc, char *argv[])
+{
+	char szBuf[MAX_BUF_LEN] = "\0";
+	char szMsg[MAX_BUF_LEN] = "hello\0";
+	OpenRemoteService();
+	SendMsg(szMsg);
+	RecvMsg(szBuf);
+	CloseRemoteService();
+	return 0;
+}
+
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -243,13 +292,19 @@ int BringUpNetInterface()
     
     printf("Bring up interface:eth0\n");
     sa.sin_family = AF_INET;
-    sa.sin_addr.s_addr = inet_addr("192.168.40.254");
+    sa.sin_addr.s_addr = inet_addr("10.0.2.15");
     fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP);
     strncpy(ifreqlo.ifr_name, "eth0",sizeof("eth0"));
     memcpy((char *) &ifreqlo.ifr_addr, (char *) &sa, sizeof(struct sockaddr));
     ioctl(fd, SIOCSIFADDR, &ifreqlo);
     ioctl(fd, SIOCGIFFLAGS, &ifreqlo);
     ifreqlo.ifr_flags |= IFF_UP|IFF_RUNNING;
+    ((unsigned char *) &ifreqlo.ifr_hwaddr.sa_data)[0] = 0x02;
+    ((unsigned char *) &ifreqlo.ifr_hwaddr.sa_data)[1] = 0x42;
+    ((unsigned char *) &ifreqlo.ifr_hwaddr.sa_data)[2] = 0xc0;
+    ((unsigned char *) &ifreqlo.ifr_hwaddr.sa_data)[3] = 0xa8;
+    ((unsigned char *) &ifreqlo.ifr_hwaddr.sa_data)[4] = 0x28;
+    ((unsigned char *) &ifreqlo.ifr_hwaddr.sa_data)[5] = 0x05;
     ioctl(fd, SIOCSIFFLAGS, &ifreqlo);
     close(fd);
 
@@ -310,6 +365,48 @@ int BringUpNetInterface()
  
     return 0;
 }
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <net/route.h>
+#include <sys/types.h>
+#include <sys/ioctl.h>
+
+int    SetDefaultGateway()
+{
+    int sockfd;
+    struct rtentry route;
+    struct sockaddr_in *addr;
+    int err = 0;
+
+    if(((sockfd = socket(AF_INET, SOCK_DGRAM, 0)))<0){
+        perror("socket");
+        exit(1);
+    }
+
+    memset(&route, 0, sizeof(route));
+    addr = (struct sockaddr_in*) &route.rt_gateway;
+    addr->sin_family = AF_INET;
+    addr->sin_addr.s_addr = inet_addr("10.0.2.2");
+    addr = (struct sockaddr_in*) &route.rt_dst;
+    addr->sin_family = AF_INET;
+    addr->sin_addr.s_addr = INADDR_ANY;
+    addr = (struct sockaddr_in*) &route.rt_genmask;
+    addr->sin_family = AF_INET;
+    addr->sin_addr.s_addr = INADDR_ANY;
+    route.rt_dev = "eth0";
+    route.rt_flags = RTF_UP | RTF_GATEWAY;
+    route.rt_metric = 0;
+    if ((err = ioctl(sockfd, SIOCADDRT, &route)) != 0) {
+         perror("SIOCADDRT failed");
+         exit(1);
+    }
+    printf("Default gateway %s\n", inet_ntoa( ( (struct sockaddr_in *)  &route.rt_gateway)->sin_addr)); 
+}
+
+#include "getroute.c"
+
 int main()
 {
     BringUpNetInterface();
@@ -319,6 +416,8 @@ int main()
     SetPrompt("MenuOS>>");
     MenuConfig("version","MenuOS V1.0(Based on Linux 3.18.6)",NULL);
     MenuConfig("quit","Quit from MenuOS",Quit);
+    MenuConfig("replyhi", "Reply hi TCP Service", StartReplyhi);
+    MenuConfig("hello", "Hello TCP Client", Hello);
     MenuConfig("http","http request",http_client);
     ExecuteMenu();
 }
