@@ -140,7 +140,7 @@ int http_client(int argc, char *argv[])
         printf("Could not create socket");
     }
 
-    char ip[20] = ""192.30.255.113;
+    char ip[20] = "192.30.255.113";
     char *hostname = "github.com";
     /*struct hostent *hp;
     if ((hp = gethostbyname(hostname)) == NULL) {
